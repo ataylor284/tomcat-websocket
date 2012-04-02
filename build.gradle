@@ -1,0 +1,5 @@
+apply plugin: 'war'
+
+dependencies {
+    providedCompile files(fileTree(dir: 'libs', includes: ['*.jar']))
+}
