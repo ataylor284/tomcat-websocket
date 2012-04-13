@@ -14,53 +14,44 @@
       width: 600px;
       border: 1px solid black;
     }
+    #output div:nth-child(even) {
+      background: #e0e0e0;
+    }
+    .notification {
+      color: red;
+    }
   </style>
 
   <script language="javascript" type="text/javascript">
 
-    var wsUri = "ws://localhost:8080/tomcat-websocket/websocket";
+    var wsUri = "ws://localhost:8082/tomcat-websocket/websocket";
     var output;
+    var websocket;
 
     function init() {
       output = document.getElementById("output");
-      testWebSocket();
-    }
 
-    function testWebSocket() {
       websocket = new WebSocket(wsUri);
-      websocket.onopen = function(evt) { onOpen(evt) };
-      websocket.onclose = function(evt) { onClose(evt) };
-      websocket.onmessage = function(evt) { onMessage(evt) };
-      websocket.onerror = function(evt) { onError(evt) };
+      websocket.onopen = function(evt) { 
+        showOutput('<span class="notification">CONNECTED</span>');
+      };
+      websocket.onclose = function(evt) { 
+        showOutput('<span class="notification">DISCONNECTED</span>');
+      };
+      websocket.onmessage = function(evt) { 
+        var message = JSON.parse(evt.data);
+        showOutput('<span style="color: blue;">' + message.user + ':</span> ' + message.msg);
+      };
+      websocket.onerror = function(evt) { 
+        showOutput('<span class="notification">ERROR:</span> ' + evt.data);
+      };
     }
 
-    function onOpen(evt) {
-      writeToScreen("CONNECTED");
-      doSend("WebSocket rocks");
-    }
-
-    function onClose(evt) {
-      writeToScreen("DISCONNECTED");
-    }
-
-    function onMessage(evt) {
-      writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
-    }
-
-    function onError(evt) {
-      writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
-    }
-
-    function doSend(message) {
-      writeToScreen("SENT: " + message); 
-      websocket.send(message);
-    }
-
-    function writeToScreen(message) {
-      var pre = document.createElement("p");
-      pre.style.wordWrap = "break-word";
+    function showOutput(message) {
+      var pre = document.createElement("div");
       pre.innerHTML = message;
       output.appendChild(pre);
+      output.scrollTop = output.scrollHeight;
     }
 
     window.addEventListener("load", init, false);
@@ -75,7 +66,7 @@
 
   <div id="output"></div>
 
-  <form onSubmit="doSend(document.getElementById('msg').value); return false;">
+  <form onSubmit="websocket.send(document.getElementById('msg').value); return false;">
     <input type="text" name="msg" id="msg"/><br/>
     <input type="submit"/>
   </form>

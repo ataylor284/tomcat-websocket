@@ -16,7 +16,7 @@ import java.util.logging.*;
 public class WSTestServlet extends WebSocketServlet {
     private static final long serialVersionUID = 1L;
 
-    private static final long STATUS_DELAY = 5000;
+    private static final long STATUS_DELAY = 10000;
     private final Timer statusTimer = new Timer(WSTestServlet.class.getSimpleName() + " StatusTimer");
     private final AtomicInteger connectionIds = new AtomicInteger(0);
     private final ConcurrentHashMap<Integer, TestMessageInbound> connections = new ConcurrentHashMap<Integer, TestMessageInbound>();
@@ -34,14 +34,17 @@ public class WSTestServlet extends WebSocketServlet {
     }
 
     private void status() {
-        broadcast(String.format("current status: %d active connections", connections.size()));
+        broadcast("system", String.format("current status: %d active connections", connections.size()));
     }
 
-    private void broadcast(String message) {
-        logger.info(String.format("broadcast(%s)", message));
+    private void broadcast(String user, String msg) {
+        logger.info(String.format("broadcast(%s, %s)", user, msg));
+
+        String json = String.format("{\"user\": \"%s\", \"msg\": \"%s\"}", user, msg);
+
         for (TestMessageInbound connection : getConnections()) {
             try {
-                CharBuffer response = CharBuffer.wrap(message);
+                CharBuffer response = CharBuffer.wrap(json);
                 connection.getWsOutbound().writeTextMessage(response);
             } catch (IOException ignore) {
             }
@@ -77,14 +80,14 @@ public class WSTestServlet extends WebSocketServlet {
         protected void onOpen(WsOutbound outbound) {
             logger.info("onOpen " + id);
             connections.put(id, this);
-            broadcast(String.format("client %d joined", id));
+            broadcast("system", String.format("client %d joined", id));
         }
 
         @Override
         protected void onClose(int status) {
             logger.info("onClose " + id);
             connections.remove(id);
-            broadcast(String.format("client %d left", id));
+            broadcast("system", String.format("client %d left", id));
         }
 
         @Override
@@ -96,7 +99,7 @@ public class WSTestServlet extends WebSocketServlet {
         @Override
         protected void onTextMessage(CharBuffer charBuffer) throws IOException {
             logger.info("onTextMessage " + id);
-            broadcast(String.format("client %d says %s", id, charBuffer.toString()));
+            broadcast(String.format("client %d", id), charBuffer.toString());
         }
     }
 }

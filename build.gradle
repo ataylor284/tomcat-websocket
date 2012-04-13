@@ -1,5 +1,11 @@
 apply plugin: 'war'
 
+repositories {
+    mavenCentral() 
+}
+
 dependencies {
-    providedCompile files(fileTree(dir: 'libs', includes: ['*.jar']))
+    providedCompile group: 'org.apache.tomcat', name: 'tomcat-catalina', version: '7.0.27'
+    providedCompile group: 'org.apache.tomcat', name: 'tomcat-coyote', version: '7.0.27'
+    providedCompile group: 'org.apache.tomcat', name: 'tomcat-servlet-api', version: '7.0.27'
 }
